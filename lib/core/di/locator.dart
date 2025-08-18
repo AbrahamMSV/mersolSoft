@@ -2,19 +2,21 @@ import 'package:get_it/get_it.dart';
 import '../network/http_client.dart';
 import '../config/app_config.dart';
 
-// User
+// Auth / User / OLTs (existentes)
 import '../../features/user/data/user_service.dart';
 import '../../features/user/data/user_repository.dart';
-
-// Auth
 import '../../features/auth/data/auth_service.dart';
 import '../../features/auth/data/auth_repository.dart';
 import '../../features/auth/presentation/auth_controller.dart';
-
-// OLTs (nuevos)
 import '../../features/olts/data/olts_service.dart';
 import '../../features/olts/data/olts_repository.dart';
 import '../../features/olts/presentation/olts_controller.dart';
+
+// NUEVO: foto por OLT
+import '../../features/olt_photo/data/olt_photo_service.dart';
+import '../../features/olt_photo/data/olt_photo_repository.dart';
+import '../../features/olt_photo/presentation/olt_photo_controller.dart';
+
 final locator = GetIt.instance;
 
 void setupLocator() {
@@ -26,26 +28,26 @@ void setupLocator() {
         () => UserService(locator<HttpClient>(), baseUrl: AppConfig.baseUrl),
   );
   locator.registerLazySingleton<AuthService>(
-        () => AuthService(
-      locator<HttpClient>(),
-      baseUrl: AppConfig.baseUrl,
-      token: AppConfig.apiToken,
-    ),
+        () => AuthService(locator<HttpClient>(), baseUrl: AppConfig.baseUrl, token: AppConfig.apiToken),
   );
   locator.registerLazySingleton<OltsService>(
-        () => OltsService(
-      locator<HttpClient>(),
-      baseUrl: AppConfig.baseUrl,
-      token: AppConfig.apiToken,
-      path: AppConfig.oltsPath,
-    ),
+        () => OltsService(locator<HttpClient>(), baseUrl: AppConfig.baseUrl, token: AppConfig.apiToken, path: AppConfig.oltsPath),
+  );
+  // NUEVO
+  locator.registerLazySingleton<OltPhotoService>(
+        () => OltPhotoService(locator<HttpClient>(), baseUrl: AppConfig.baseUrl, token: AppConfig.apiToken, path: AppConfig.fotografiaPath),
   );
 
   // Repositories
   locator.registerLazySingleton<UserRepository>(() => UserRepository(locator<UserService>()));
   locator.registerLazySingleton<AuthRepository>(() => AuthRepository(locator<AuthService>()));
   locator.registerLazySingleton<OltsRepository>(() => OltsRepository(locator<OltsService>()));
+  // NUEVO
+  locator.registerLazySingleton<OltPhotoRepository>(() => OltPhotoRepository(locator<OltPhotoService>()));
+
   // Controllers
   locator.registerLazySingleton<AuthController>(() => AuthController(locator<AuthRepository>()));
   locator.registerLazySingleton<OltsController>(() => OltsController(locator<OltsRepository>()));
+  // NUEVO
+  locator.registerFactory<OltPhotoController>(() => OltPhotoController(locator<OltPhotoRepository>()));
 }

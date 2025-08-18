@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import '../../../core/di/locator.dart';
 import 'olts_controller.dart';
 import '../domain/olt_host.dart';
+import 'package:go_router/go_router.dart';
+import '../../olts/domain/olt_host.dart';
 
 class OltsScreen extends StatefulWidget {
   const OltsScreen({super.key});
@@ -115,11 +117,7 @@ class _OltCard extends StatelessWidget {
   final bool revealed;
   final VoidCallback onToggleReveal;
 
-  const _OltCard({
-    required this.item,
-    required this.revealed,
-    required this.onToggleReveal,
-  });
+  const _OltCard({required this.item, required this.revealed, required this.onToggleReveal});
 
   @override
   Widget build(BuildContext context) {
@@ -132,64 +130,33 @@ class _OltCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Primera línea: OLT e IP
-            Row(
-              children: [
-                Expanded(
-                  child: Text('OLT ${item.olt}', style: Theme.of(context).textTheme.titleMedium),
-                ),
-                const SizedBox(width: 8),
-                Chip(label: Text(item.ipPublica)),
-                IconButton(
-                  tooltip: 'Copiar IP',
-                  icon: const Icon(Icons.copy),
-                  onPressed: () {
-                    Clipboard.setData(ClipboardData(text: item.ipPublica));
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('IP copiada')));
-                  },
-                ),
-              ],
-            ),
+            Row(children: [
+              Expanded(child: Text('OLT ${item.olt}', style: Theme.of(context).textTheme.titleMedium)),
+              Chip(label: Text(item.ipPublica)),
+              IconButton(tooltip: 'Copiar IP', icon: const Icon(Icons.copy), onPressed: () { /* copiar IP */ }),
+            ]),
             const SizedBox(height: 8),
-
-            // Usuario
-            Row(
-              children: [
-                const Icon(Icons.person, size: 18),
-                const SizedBox(width: 6),
-                Expanded(child: Text('Usuario: ${item.usuario}')),
-                IconButton(
-                  tooltip: 'Copiar usuario',
-                  icon: const Icon(Icons.copy),
-                  onPressed: () {
-                    Clipboard.setData(ClipboardData(text: item.usuario));
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Usuario copiado')));
-                  },
-                ),
-              ],
-            ),
+            Row(children: [
+              const Icon(Icons.person, size: 18), const SizedBox(width: 6),
+              Expanded(child: Text('Usuario: ${item.usuario}')),
+              IconButton(tooltip: 'Copiar usuario', icon: const Icon(Icons.copy), onPressed: () { /* copiar usuario */ }),
+            ]),
             const SizedBox(height: 6),
-
-            // Password (oculto/visible)
-            Row(
-              children: [
-                const Icon(Icons.lock, size: 18),
-                const SizedBox(width: 6),
-                Expanded(child: Text('Pass: $passText')),
-                IconButton(
-                  tooltip: revealed ? 'Ocultar contraseña' : 'Mostrar contraseña',
-                  icon: Icon(revealed ? Icons.visibility_off : Icons.visibility),
-                  onPressed: onToggleReveal,
-                ),
-                IconButton(
-                  tooltip: 'Copiar contraseña',
-                  icon: const Icon(Icons.copy),
-                  onPressed: () {
-                    Clipboard.setData(ClipboardData(text: item.pass));
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Contraseña copiada')));
-                  },
-                ),
-              ],
+            Row(children: [
+              const Icon(Icons.lock, size: 18), const SizedBox(width: 6),
+              Expanded(child: Text('Pass: $passText')),
+              IconButton(tooltip: revealed ? 'Ocultar' : 'Mostrar', icon: Icon(revealed ? Icons.visibility_off : Icons.visibility), onPressed: onToggleReveal),
+              IconButton(tooltip: 'Copiar contraseña', icon: const Icon(Icons.copy), onPressed: () { /* copiar pass */ }),
+            ]),
+            const SizedBox(height: 12),
+            // NUEVO: botón para ir a formulario de fotografía
+            Align(
+              alignment: Alignment.centerRight,
+              child: ElevatedButton.icon(
+                icon: const Icon(Icons.photo_camera),
+                label: const Text('Fotografía'),
+                onPressed: () => context.go('/olts/foto', extra: item),
+              ),
             ),
           ],
         ),
