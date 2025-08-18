@@ -1,0 +1,33 @@
+# Flutter/Dart/Pub related
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+
+# Build outputs
+build/
+
+# Android related
+**/android/**/gradle-wrapper.jar
+**/android/.gradle/
+**/android/captures/
+**/android/gradlew
+**/android/gradlew.bat
+**/android/local.properties
+**/android/key.properties
+
+# iOS related
+**/ios/Flutter/.last_build_id
+**/ios/Pods/
+**/ios/Runner/GeneratedPluginRegistrant.*
+
+# Xcode
+*.xcworkspace
+*.xcuserdata/
+
+# Web
+.dart_tool/
+build/
+
+# Misc
+*.log
