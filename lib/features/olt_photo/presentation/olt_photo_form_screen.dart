@@ -8,8 +8,9 @@ import 'olt_photo_controller.dart';
 import 'camera_capture_screen.dart';
 
 class OltPhotoFormScreen extends StatefulWidget {
-  final OltHost item;
-  const OltPhotoFormScreen({super.key, required this.item});
+  final OltHost? item;
+  final int? diagnosticoId;
+  const OltPhotoFormScreen({super.key, required this.item, this.diagnosticoId});
 
   @override
   State<OltPhotoFormScreen> createState() => _OltPhotoFormScreenState();
@@ -24,6 +25,7 @@ class _OltPhotoFormScreenState extends State<OltPhotoFormScreen> {
   void initState() {
     super.initState();
     _ctrl = locator<OltPhotoController>()..addListener(_onState);
+    _ctrl.setDiagnosticoId(widget.diagnosticoId);
   }
 
   void _onState() => setState(() {});
@@ -49,7 +51,9 @@ class _OltPhotoFormScreenState extends State<OltPhotoFormScreen> {
     if (!_formKey.currentState!.validate()) return;
     _ctrl.setComentario(_txtCtl.text.trim());
     try {
-      final ok = await _ctrl.enviar(widget.item.olt);
+      final ok = await _ctrl.enviar(
+        diagnosticoIdOverride: widget.diagnosticoId, // <<-- si vino por navegación, úsalo
+      );
       if (ok && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Enviado con éxito')));
         context.pop(); // volver a OLTs
@@ -71,26 +75,38 @@ class _OltPhotoFormScreenState extends State<OltPhotoFormScreen> {
     final path = _ctrl.filePath;
 
     return Scaffold(
-      appBar: AppBar(title: Text('Fotografía OLT ${widget.item.olt}')),
+      appBar: AppBar(title: Text('Fotografía ${widget.diagnosticoId}'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            final router = GoRouter.of(context);
+            if (router.canPop()) {
+              router.pop();
+            } else {
+              if (widget.diagnosticoId != null) {
+                router.go('/diagnosticos');
+              } else {
+                router.go('/olts');
+              }
+            }
+          },
+        ),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
           child: ListView(
             children: [
-              Text('IP: ${widget.item.ipPublica}', style: Theme.of(context).textTheme.bodyMedium),
-              const SizedBox(height: 8),
-              Text('Usuario: ${widget.item.usuario}', style: Theme.of(context).textTheme.bodyMedium),
-              const SizedBox(height: 16),
               TextFormField(
                 controller: _txtCtl,
                 maxLines: 3,
                 decoration: const InputDecoration(
-                  labelText: 'Comentario',
+                  labelText: 'Diagnostico',
                   hintText: 'Describe el contexto de la fotografía',
                   border: OutlineInputBorder(),
                 ),
-                validator: (v) => (v == null || v.trim().isEmpty) ? 'Ingrese un comentario' : null,
+                validator: (v) => (v == null || v.trim().isEmpty) ? 'Ingrese un diagnostico' : null,
               ),
               const SizedBox(height: 16),
               Row(

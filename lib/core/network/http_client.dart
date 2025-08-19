@@ -22,7 +22,32 @@ class HttpClient {
       throw NetworkException('Fallo de red: $e');
     }
   }
+// NUEVO: POST JSON (application/json)
+  Future<Map<String, dynamic>> postJson(
+      Uri url, {
+        Map<String, String>? headers,
+        Map<String, dynamic>? body,
+      }) async {
+    try {
+      final finalHeaders = {
+        'Content-Type': 'application/json',
+        if (headers != null) ...headers,
+      };
+      final res = await _client
+          .post(url, headers: finalHeaders, body: jsonEncode(body ?? const {}))
+          .timeout(timeout);
 
+      if (res.statusCode >= 200 && res.statusCode < 300) {
+        return (jsonDecode(res.body) as Map<String, dynamic>);
+      }
+      if (res.statusCode == 404) throw NotFoundException('Recurso no encontrado', statusCode: res.statusCode);
+      throw ServerException('Error del servidor', statusCode: res.statusCode);
+    } on FormatException {
+      throw ParsingException('Respuesta no es JSON válido');
+    } on Exception catch (e) {
+      throw NetworkException('Fallo de red: $e');
+    }
+  }
   // NUEVO: POST multipart (texto + archivo)
   Future<Map<String, dynamic>> postMultipart(
       Uri url, {

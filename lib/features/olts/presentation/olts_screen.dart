@@ -51,16 +51,14 @@ class _OltsScreenState extends State<OltsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('OLTs'),
+        title: const Text('Ordenes Asignadas'),
         actions: [
           PopupMenuButton<OltSort>(
             initialValue: _ctrl.sort,
             onSelected: (s) => _ctrl.sort = s,
             itemBuilder: (context) => const [
-              PopupMenuItem(value: OltSort.oltAsc,  child: Text('Ordenar OLT ↑')),
-              PopupMenuItem(value: OltSort.oltDesc, child: Text('Ordenar OLT ↓')),
-              PopupMenuItem(value: OltSort.ipAsc,   child: Text('Ordenar IP ↑')),
-              PopupMenuItem(value: OltSort.ipDesc,  child: Text('Ordenar IP ↓')),
+              PopupMenuItem(value: OltSort.oltAsc,  child: Text('Ordenar Fecha ↑')),
+              PopupMenuItem(value: OltSort.oltDesc, child: Text('Ordenar Fecha ↓'))
             ],
           ),
         ],
@@ -101,8 +99,8 @@ class _OltsScreenState extends State<OltsScreen> {
             if (!loading && error == null && items.isNotEmpty)
               ...items.map((o) => _OltCard(
                 item: o,
-                revealed: _revealPassIds.contains(o.id),
-                onToggleReveal: () => _toggleReveal(o.id),
+                revealed: _revealPassIds.contains(o.asignadaId),
+                onToggleReveal: () => _toggleReveal(o.asignadaId),
               )),
             const SizedBox(height: 24),
           ],
@@ -121,7 +119,7 @@ class _OltCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final passText = revealed ? item.pass : '•' * (item.pass.length.clamp(4, 16));
+    final passText = revealed ? item.folio : '•' * (item.folio.length.clamp(4, 16));
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -131,32 +129,65 @@ class _OltCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(children: [
-              Expanded(child: Text('OLT ${item.olt}', style: Theme.of(context).textTheme.titleMedium)),
-              Chip(label: Text(item.ipPublica)),
+              Expanded(child: Text('Ordenes ${item.asignadaId}', style: Theme.of(context).textTheme.titleMedium)),
+              Chip(label: Text(item.folio)),
               IconButton(tooltip: 'Copiar IP', icon: const Icon(Icons.copy), onPressed: () { /* copiar IP */ }),
             ]),
             const SizedBox(height: 8),
             Row(children: [
               const Icon(Icons.person, size: 18), const SizedBox(width: 6),
-              Expanded(child: Text('Usuario: ${item.usuario}')),
-              IconButton(tooltip: 'Copiar usuario', icon: const Icon(Icons.copy), onPressed: () { /* copiar usuario */ }),
+              Expanded(child: Text('Folio: ${item.folio}'))
             ]),
             const SizedBox(height: 6),
             Row(children: [
               const Icon(Icons.lock, size: 18), const SizedBox(width: 6),
-              Expanded(child: Text('Pass: $passText')),
-              IconButton(tooltip: revealed ? 'Ocultar' : 'Mostrar', icon: Icon(revealed ? Icons.visibility_off : Icons.visibility), onPressed: onToggleReveal),
-              IconButton(tooltip: 'Copiar contraseña', icon: const Icon(Icons.copy), onPressed: () { /* copiar pass */ }),
+              Expanded(child: Text('Fecha: ${item.fechaRecepcion}')),
+            ]),
+            const SizedBox(height: 8),
+            Row(children: [
+              const Icon(Icons.person,size: 18),const SizedBox(width: 6),
+              Expanded(child: Text('Recibe: ${item.recibe}'))
+            ]),
+            const SizedBox(height: 8),
+            Row(children: [
+              const Icon(Icons.person,size: 18),const SizedBox(width: 6),
+              Expanded(child: Text('Tipo Servicio: ${item.tipoServicio}'))
+            ]),
+            const SizedBox(height: 8),
+            Row(children: [
+              const Icon(Icons.person,size: 16),const SizedBox(width: 6),
+              Expanded(child: Text('Articulo: ${item.articulo}'))
+            ]),
+            const SizedBox(height: 8),
+            Row(children: [
+              const Icon(Icons.person,size: 16),const SizedBox(width: 6),
+              Expanded(child: Text('Marca: ${item.marca}'))
+            ]),
+            const SizedBox(height: 6),
+            Row(children: [
+              const Icon(Icons.person,size: 16),const SizedBox(width: 6),
+              Expanded(child: Text('Semaforo: ${item.semaforo}'))
             ]),
             const SizedBox(height: 12),
-            // NUEVO: botón para ir a formulario de fotografía
-            Align(
-              alignment: Alignment.centerRight,
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.photo_camera),
-                label: const Text('Fotografía'),
-                onPressed: () => context.go('/olts/foto', extra: item),
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                const SizedBox(width: 8),
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.assignment),
+                  label: const Text('Diagnóstico'),
+                  onPressed: () {
+                    final osId = item.ordenServicioId;
+                    if (osId == null || osId == 0) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Este OLT no tiene OrdenServicioID')),
+                      );
+                      return;
+                    }
+                    context.push('/diagnosticos', extra: osId);
+                  },
+                ),
+              ],
             ),
           ],
         ),

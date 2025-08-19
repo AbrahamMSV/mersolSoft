@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import '../../../core/errors/app_exception.dart';
 import '../../../core/result/result.dart';
 import '../data/olt_photo_repository.dart';
-import '../domain/olt_photo_payload.dart';
 
 class OltPhotoController extends ChangeNotifier {
   final OltPhotoRepository _repo;
@@ -10,22 +9,35 @@ class OltPhotoController extends ChangeNotifier {
 
   String comentario = '';
   String? filePath; // path local de la foto
+  int? diagnosticoId;
   bool loading = false;
   String? error;
 
   void setComentario(String v) { comentario = v; notifyListeners(); }
   void setFilePath(String? path) { filePath = path; notifyListeners(); }
+  void setDiagnosticoId(int? id) { diagnosticoId = id; notifyListeners(); }
 
-  Future<bool> enviar(int olt) async {
+  Future<bool> enviar({int? diagnosticoIdOverride}) async {
     if (filePath == null || filePath!.isEmpty) {
       error = 'Debes tomar fotografía';
       notifyListeners();
-      throw Exception('Debes tomar fotografía'); // según tu requerimiento
+      throw Exception('Debes tomar fotografía');
     }
-
+    final id = diagnosticoIdOverride ?? diagnosticoId;
+    if (id == null) {
+      error = 'Falta DiagnosticoID';
+      notifyListeners();
+      throw Exception('Falta DiagnosticoID');
+    }
     loading = true; error = null; notifyListeners();
-    final res = await _repo.enviar(OltPhotoPayload(olt: olt, comentario: comentario, filePath: filePath!));
+    final res = await _repo.enviar(
+      filePath: filePath!,
+      diagnosticoId: id,                // <<-- lo pasamos al repo
+      comentario: comentario,
+    );
+
     loading = false;
+
     return res.when(
       ok: (_) { notifyListeners(); return true; },
       err: (e) { error = _humanize(e); notifyListeners(); return false; },

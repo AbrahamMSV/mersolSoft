@@ -1,5 +1,7 @@
 import '../../../core/result/result.dart';
 import '../../../core/errors/app_exception.dart';
+import '../../../core/di/locator.dart';
+import '../../../core/session/session_store.dart';
 import '../domain/olt_host.dart';
 import 'olts_service.dart';
 
@@ -9,13 +11,12 @@ class OltsRepository {
 
   Future<Result<List<OltHost>>> getOlts() async {
     try {
-      final json = await _service.fetchOltsRaw();
-
-      final isError = (json['IsError'] as bool?) ?? true;
-      if (isError) {
-        final msg = (json['message'] as String?) ?? 'No se pudo obtener la lista';
-        return Err(ServerException(msg));
+      final store = locator<SessionStore>();
+      final idUsuario = store.session?.profile?.idUsuario;
+      if (idUsuario == null || idUsuario == 0) {
+        return Err(ServerException('Sesión inválida o vencida: idUsuario no disponible'));
       }
+      final json = await _service.fetchOltsRaw(idUsuario);
 
       final data = json['data'];
       if (data is! List) {

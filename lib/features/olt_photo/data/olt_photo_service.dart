@@ -4,25 +4,41 @@ import '../../../core/config/app_config.dart';
 class OltPhotoService {
   final HttpClient _http;
   final String baseUrl;
-  final String token;
-  final String path;
+  final String asignarPath;
 
-  OltPhotoService(this._http, {required this.baseUrl, required this.token, required this.path});
+  OltPhotoService(
+      this._http, {
+        String? baseUrl,
+        String? asignarPath,
+      })  : baseUrl = baseUrl ?? AppConfig.baseUrl,
+        asignarPath = asignarPath ?? AppConfig.asignarPath;
 
-  /// POST multipart {baseUrl}{path}?token=...
-  /// fields: comentario, olt
-  /// file: fieldName 'fotografia'
-  Future<Map<String, dynamic>> postFoto({
-    required int olt,
-    required String comentario,
+  /// POST multipart:
+  /// {baseUrl}{asignarPath}/DiagnosticoFoto
+  /// fields: Sede, ExtensionArchivo, DiagnosticoID, ClaveTipoArchivo, DiagnosticoTexto
+  /// file:   FileStream
+  Future<Map<String, dynamic>> postDiagnosticoFoto({
+    required String sede,
+    required String extensionArchivo,
+    required int diagnosticoId,
+    required String claveTipoArchivo,
+    required String diagnosticoTexto,
     required String filePath,
   }) {
-    final uri = Uri.parse('$baseUrl$path?token=$token');
+    final uri = Uri.parse('$baseUrl$asignarPath/DiagnosticoFoto');
     return _http.postMultipart(
       uri,
-      fields: {'comentario': comentario, 'olt': '$olt'},
-      fileField: 'fotografia', // Ajusta al nombre que espera tu API
+      fields: {
+        'Sede': sede,
+        'ExtensionArchivo': extensionArchivo,
+        'DiagnositicoID': '$diagnosticoId',
+        'ClaveTipoArchivo': claveTipoArchivo,
+        'DiagnosticoTexto': diagnosticoTexto,
+      },
+      fileField: 'FileStream',
       filePath: filePath,
+      // filename opcional: si quieres forzar nombre/extension
+      // filename: 'foto.$extensionArchivo',
     );
   }
 }

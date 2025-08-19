@@ -5,21 +5,19 @@ import '../../../core/config/app_config.dart';
 class OltsService {
   final HttpClient _http;
   final String baseUrl;
-  final String token;
-  final String path;
+  final String asignar;
 
   OltsService(
       this._http, {
         required this.baseUrl,
-        required this.token,
-        this.path = AppConfig.oltsPath, // '/olts' por defecto
+        required this.asignar
       });
 
   /// GET {baseUrl}{path}?token=...
   /// Respuesta esperada:
   /// { "IsError": false, "message": "...", "data": [ {id,Usuario,Pass,Olt,IpPublica}, ... ] }
-  Future<Map<String, dynamic>> fetchOltsRaw() async {
-    final uri = Uri.parse('$baseUrl$path?token=$token&user=oltmanager&pass=F%40stN3t%2325');
+  Future<Map<String, dynamic>> fetchOltsRaw(int idUsuario) async {
+    final uri = Uri.parse('$baseUrl$asignar/Asignado?id=$idUsuario');
     return _http.getJson(uri);
   }
 }

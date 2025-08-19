@@ -4,7 +4,7 @@ import '../../../core/errors/app_exception.dart';
 import '../data/olts_repository.dart';
 import '../domain/olt_host.dart';
 
-enum OltSort { oltAsc, oltDesc, ipAsc, ipDesc }
+enum OltSort { oltAsc, oltDesc}
 
 class OltsController extends ChangeNotifier {
   final OltsRepository _repo;
@@ -41,18 +41,14 @@ class OltsController extends ChangeNotifier {
     final q = _query.trim().toLowerCase();
     if (q.isNotEmpty) {
       data = data.where((o) =>
-      o.usuario.toLowerCase().contains(q) ||
-          o.ipPublica.toLowerCase().contains(q) ||
-          o.olt.toString().contains(q)
+      o.fechaRecepcion.toLowerCase().contains(q)
       );
     }
 
     final list = data.toList();
     switch (_sort) {
-      case OltSort.oltAsc:  list.sort((a, b) => a.olt.compareTo(b.olt)); break;
-      case OltSort.oltDesc: list.sort((a, b) => b.olt.compareTo(a.olt)); break;
-      case OltSort.ipAsc:   list.sort((a, b) => a.ipPublica.compareTo(b.ipPublica)); break;
-      case OltSort.ipDesc:  list.sort((a, b) => b.ipPublica.compareTo(a.ipPublica)); break;
+      case OltSort.oltAsc:  list.sort((a, b) => a.fechaRecepcion.compareTo(b.fechaRecepcion)); break;
+      case OltSort.oltDesc: list.sort((a, b) => b.fechaRecepcion.compareTo(a.fechaRecepcion)); break;
     }
     return list;
   }

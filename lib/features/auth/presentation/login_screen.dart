@@ -77,7 +77,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: loading ? null : _submit,
-                  child: Text(loading ? 'Validando...' : 'Iniciar sesión'),
+                  child: Text(loading ? 'Validando...' : 'Iniciar'),
                 ),
               ),
             ],

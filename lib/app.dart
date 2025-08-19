@@ -5,11 +5,12 @@ import 'features/auth/presentation/auth_controller.dart';
 import 'features/auth/presentation/login_screen.dart';
 import 'features/user/presentation/user_screen.dart';
 import 'features/olts/presentation/olts_screen.dart';
-
+import 'features/diagnostico_ordenservicio/presentation/diagnostico_screen.dart';
+import 'features/diagnostico_ordenservicio/presentation/diagnostico_foto_placeholder.dart';
 // NUEVO
 import 'features/olt_photo/presentation/olt_photo_form_screen.dart';
 import 'features/olts/domain/olt_host.dart';
-
+import 'features/form_diagnostico/presentation/form_diagnostico_screen.dart';
 final _auth = locator<AuthController>();
 
 class _HomeScaffold extends StatelessWidget {
@@ -25,13 +26,16 @@ class _HomeScaffold extends StatelessWidget {
           child: ListView(
             children: [
               const DrawerHeader(child: Text('Menú')),
-              ListTile(selected: current == '/user', leading: const Icon(Icons.person), title: const Text('Usuarios'), onTap: () => context.go('/user')),
-              ListTile(selected: current == '/olts', leading: const Icon(Icons.memory), title: const Text('OLTs'), onTap: () => context.go('/olts')),
+              ListTile(selected: current == '/user', leading: const Icon(Icons.person), title: const Text('Inicio'), onTap: () => context.go('/user')),
+              ListTile(selected: current == '/olts', leading: const Icon(Icons.memory), title: const Text('Ordenes'), onTap: () => context.go('/olts')),
               const Divider(),
               ListTile(
                 leading: const Icon(Icons.logout),
                 title: const Text('Cerrar sesión'),
-                onTap: () { _auth.session = null; context.go('/login'); },
+                onTap: () async {
+                  await locator<AuthController>().logout();
+                  context.go('/login');
+                },
               ),
             ],
           ),
@@ -54,6 +58,46 @@ final router = GoRouter(
       builder: (context, state) {
         final item = state.extra as OltHost;
         return _HomeScaffold(current: '/olts', child: OltPhotoFormScreen(item: item));
+      },
+    ),
+    GoRoute(
+      path: '/diagnosticos',
+      builder: (context, state) {
+        final ordenId = state.extra as int; // ← viene desde la card OLT
+        return _HomeScaffold(
+          current: '/diagnosticos',
+          child: DiagnosticoScreen(ordenServicioId: ordenId),
+        );
+      },
+    ),
+    GoRoute(
+      path: '/diagnosticos/foto',
+      builder: (context, state) {
+        final extra = state.extra;
+
+        // Acepta int directo o string numérica, si no, queda null
+        final int? diagnosticoId = switch (extra) {
+          final int v => v,
+          final String s => int.tryParse(s),
+          _ => null,
+        };
+        return _HomeScaffold(
+          current: '/diagnosticos',
+          child: OltPhotoFormScreen(
+            item: null,                    // ya no venimos desde OLT
+            diagnosticoId: diagnosticoId,  // <<-- ¡aquí va el ID real!
+          ),
+        );
+      },
+    ),
+    GoRoute(
+      path: '/diagnosticos/nuevo',
+      builder: (context, state) {
+        final osId = state.extra as int; // OrdenServicioID
+        return _HomeScaffold(
+          current: '/diagnosticos',
+          child: FormDiagnosticoScreen(ordenServicioId: osId),
+        );
       },
     ),
   ],

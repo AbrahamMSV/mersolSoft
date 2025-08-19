@@ -32,7 +32,7 @@ class _UserScreenState extends State<UserScreen> {
     final olt = int.tryParse(text);
     if (olt == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ingresa un OLT numérico')),
+        const SnackBar(content: Text('Ingresa')),
       );
       return;
     }
@@ -46,7 +46,7 @@ class _UserScreenState extends State<UserScreen> {
     final user = _ctrl.data;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Usuario por OLT')),
+      appBar: AppBar(title: const Text('Inicio')),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -55,7 +55,7 @@ class _UserScreenState extends State<UserScreen> {
               controller: _ctl,
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(
-                labelText: 'OLT', border: OutlineInputBorder(),
+                labelText: 'Campo', border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 12),
