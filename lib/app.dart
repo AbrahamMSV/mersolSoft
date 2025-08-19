@@ -6,11 +6,13 @@ import 'features/auth/presentation/login_screen.dart';
 import 'features/user/presentation/user_screen.dart';
 import 'features/olts/presentation/olts_screen.dart';
 import 'features/diagnostico_ordenservicio/presentation/diagnostico_screen.dart';
-import 'features/diagnostico_ordenservicio/presentation/diagnostico_foto_placeholder.dart';
-// NUEVO
 import 'features/olt_photo/presentation/olt_photo_form_screen.dart';
 import 'features/olts/domain/olt_host.dart';
 import 'features/form_diagnostico/presentation/form_diagnostico_screen.dart';
+import 'features/card_refacciones/presentation/refacciones_screen.dart';
+import 'features/form_refacciones/presentation/form_refacciones_screen.dart';
+import 'features/order_status/domain/order_status_args.dart';
+import 'features/order_status/presentation/order_status_screen.dart';
 final _auth = locator<AuthController>();
 
 class _HomeScaffold extends StatelessWidget {
@@ -97,6 +99,67 @@ final router = GoRouter(
         return _HomeScaffold(
           current: '/diagnosticos',
           child: FormDiagnosticoScreen(ordenServicioId: osId),
+        );
+      },
+    ),
+    GoRoute(
+      path: '/refacciones',
+      builder: (context, state) {
+        final osId = state.extra as int?;  // robustez: podría venir string
+        if (osId == null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Falta OrdenServicioID')));
+            GoRouter.of(context).go('/olts');
+          });
+          return const SizedBox.shrink();
+        }
+        return _HomeScaffold(
+          current: '/refacciones',
+          child: RefaccionesScreen(ordenServicioId: osId),
+        );
+      },
+    ),
+    GoRoute(
+      path: '/refacciones/nuevo',
+      builder: (context, state) {
+        final osId = state.extra as int?;
+        if (osId == null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Falta OrdenServicioID')));
+            GoRouter.of(context).go('/refacciones');
+          });
+          return const SizedBox.shrink();
+        }
+        return _HomeScaffold(
+          current: '/refacciones',
+          child: FormRefaccionesScreen(ordenServicioId: osId),
+        );
+      },
+    ),
+    GoRoute(
+      path: '/estatus',
+      builder: (context, state) {
+        final extra = state.extra;
+        OrderStatusArgs? args;
+        if (extra is OrderStatusArgs) {
+          args = extra;
+        } else if (extra is Map) {
+          final os = extra['ordenServicioId'];
+          final st = extra['statusOrderId'];
+          if (os is int) {
+            args = OrderStatusArgs(ordenServicioId: os, statusOrderId: st is int ? st : null);
+          }
+        }
+        if (args == null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Faltan parámetros de estatus')));
+            GoRouter.of(context).go('/olts');
+          });
+          return const SizedBox.shrink();
+        }
+        return _HomeScaffold(
+          current: '/estatus',
+          child: OrderStatusScreen(args: args),
         );
       },
     ),

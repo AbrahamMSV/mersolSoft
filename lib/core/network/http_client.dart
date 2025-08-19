@@ -78,4 +78,41 @@ class HttpClient {
       throw NetworkException('Fallo de red: $e');
     }
   }
+  Future<Map<String, dynamic>> postJsonLenient(
+      Uri url, {
+        Map<String, String>? headers,
+        Map<String, dynamic>? body,
+      }) async {
+    try {
+      final finalHeaders = {
+        'Content-Type': 'application/json',
+        if (headers != null) ...headers,
+      };
+      final res = await _client.post(url, headers: finalHeaders, body: jsonEncode(body ?? const {})).timeout(timeout);
+      // No validamos statusCode aquí: intentamos parsear siempre
+      return (jsonDecode(res.body) as Map<String, dynamic>);
+    } on FormatException {
+      throw ParsingException('Respuesta no es JSON válido');
+    } on Exception catch (e) {
+      throw NetworkException('Fallo de red: $e');
+    }
+  }
+  Future<Map<String, dynamic>> putJsonLenient(
+      Uri url, {
+        Map<String, String>? headers,
+        Map<String, dynamic>? body,
+      }) async {
+    try {
+      final finalHeaders = {
+        'Content-Type': 'application/json',
+        if (headers != null) ...headers,
+      };
+      final res = await _client.put(url, headers: finalHeaders, body: jsonEncode(body ?? const {})).timeout(timeout);
+      return (jsonDecode(res.body) as Map<String, dynamic>);
+    } on FormatException {
+      throw ParsingException('Respuesta no es JSON válido');
+    } on Exception catch (e) {
+      throw NetworkException('Fallo de red: $e');
+    }
+  }
 }

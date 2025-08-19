@@ -27,6 +27,18 @@ import '../../features/diagnostico_ordenservicio/presentation/diagnostico_contro
 import '../../features/form_diagnostico/data/form_diagnostico_service.dart';
 import '../../features/form_diagnostico/data/form_diagnostico_repository.dart';
 import '../../features/form_diagnostico/presentation/form_diagnostico_controller.dart';
+//CARD REFACCIONES
+import '../../features/card_refacciones/data/refacciones_service.dart';
+import '../../features/card_refacciones/data/refacciones_repository.dart';
+import '../../features/card_refacciones/presentation/refacciones_controller.dart';
+//FORM REFACCIONES
+import '../../features/form_refacciones/data/form_refacciones_service.dart';
+import '../../features/form_refacciones/data/form_refacciones_repository.dart';
+import '../../features/form_refacciones/presentation/form_refacciones_controller.dart';
+//ORDER STATUS
+import '../../features/order_status/data/order_status_service.dart';
+import '../../features/order_status/data/order_status_repository.dart';
+import '../../features/order_status/presentation/order_status_controller.dart';
 final locator = GetIt.instance;
 void setupLocator() {
   // Core
@@ -97,4 +109,34 @@ void setupLocator() {
   locator.registerFactory<FormDiagnosticoController>(
         () => FormDiagnosticoController(locator<FormDiagnosticoRepository>()),
   );
+  // Refacciones (lista por orden)
+  locator.registerLazySingleton<RefaccionesService>(() => RefaccionesService(
+    locator<HttpClient>(),
+    baseUrl: AppConfig.baseUrl,
+    csaPath: AppConfig.csaPath,
+    listaPath: AppConfig.refaccionesListaPath,
+  ));
+  locator.registerLazySingleton<RefaccionesRepository>(() => RefaccionesRepository(locator<RefaccionesService>()));
+  locator.registerLazySingleton<RefaccionesController>(() => RefaccionesController(locator<RefaccionesRepository>()));
+
+// Form Refacciones (buscador tipo select2)
+  locator.registerLazySingleton<FormRefaccionesService>(() => FormRefaccionesService(
+    locator<HttpClient>(),
+    baseUrl: AppConfig.baseUrl,
+    intelPath: AppConfig.intelPath,
+    searchPath: AppConfig.articulosSearchPath,
+    csaPath: AppConfig.csaPath,
+    agregarPath: AppConfig.refaccionesAgregarPath,
+  ));
+  locator.registerLazySingleton<FormRefaccionesRepository>(() => FormRefaccionesRepository(locator<FormRefaccionesService>()));
+  locator.registerFactory<FormRefaccionesController>(() => FormRefaccionesController(locator<FormRefaccionesRepository>()));
+//ORDER STATUS
+  locator.registerLazySingleton<OrderStatusService>(() => OrderStatusService(
+    locator<HttpClient>(),
+    baseUrl: AppConfig.baseUrl,
+    asignarPath: AppConfig.asignarPath,
+    estatusPath: AppConfig.estatusPath,
+  ));
+  locator.registerLazySingleton<OrderStatusRepository>(() => OrderStatusRepository(locator<OrderStatusService>()));
+  locator.registerFactory<OrderStatusController>(() => OrderStatusController(locator<OrderStatusRepository>()));
 }

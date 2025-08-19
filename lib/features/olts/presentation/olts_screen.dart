@@ -5,6 +5,7 @@ import 'olts_controller.dart';
 import '../domain/olt_host.dart';
 import 'package:go_router/go_router.dart';
 import '../../olts/domain/olt_host.dart';
+import '../../order_status/domain/order_status_args.dart';
 
 class OltsScreen extends StatefulWidget {
   const OltsScreen({super.key});
@@ -41,6 +42,9 @@ class _OltsScreenState extends State<OltsScreen> {
         _revealPassIds.add(id);
       }
     });
+  }
+  void _refreshOlts() {
+    _ctrl.refresh(); // tu método existente de recarga
   }
 
   @override
@@ -99,6 +103,7 @@ class _OltsScreenState extends State<OltsScreen> {
             if (!loading && error == null && items.isNotEmpty)
               ...items.map((o) => _OltCard(
                 item: o,
+                onChanged:_refreshOlts,
                 revealed: _revealPassIds.contains(o.asignadaId),
                 onToggleReveal: () => _toggleReveal(o.asignadaId),
               )),
@@ -112,10 +117,11 @@ class _OltsScreenState extends State<OltsScreen> {
 
 class _OltCard extends StatelessWidget {
   final OltHost item;
+  final VoidCallback onChanged;
   final bool revealed;
   final VoidCallback onToggleReveal;
 
-  const _OltCard({required this.item, required this.revealed, required this.onToggleReveal});
+  const _OltCard({required this.item,required this.onChanged, required this.revealed, required this.onToggleReveal});
 
   @override
   Widget build(BuildContext context) {
@@ -185,6 +191,50 @@ class _OltCard extends StatelessWidget {
                       return;
                     }
                     context.push('/diagnosticos', extra: osId);
+                  },
+                ),
+              ],
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                const SizedBox(width: 8),
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.build),
+                  label: const Text('Refacciones'),
+                  onPressed: () {
+                    final osId = item.ordenServicioId;
+                    if (osId == null || osId == 0) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Este OLT no tiene OrdenServicioID')),
+                      );
+                      return;
+                    }
+                    context.push('/refacciones', extra: osId); // push para poder volver
+                  },
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.flag),
+                  label: const Text('Estatus'),
+                  onPressed: () async {
+                    final osId = item.ordenServicioId;
+                    final st   = item.statusOrderId;
+                    if (osId == null || osId == 0) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Este OLT no tiene OrdenServicioID')),
+                      );
+                      return;
+                    }
+
+                    final updated = await context.push('/estatus', extra: OrderStatusArgs(
+                      ordenServicioId: osId,
+                      statusOrderId: st,
+                    ));
+
+                    if (updated == true) {
+                      onChanged(); // 👈 pide al padre que recargue la lista
+                    }
                   },
                 ),
               ],
