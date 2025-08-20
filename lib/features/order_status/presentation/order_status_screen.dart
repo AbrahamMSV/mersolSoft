@@ -16,7 +16,6 @@ class _OrderStatusScreenState extends State<OrderStatusScreen> {
   late final OrderStatusController _ctrl;
   final _commentCtl = TextEditingController();
   bool _changed = false;
-
   @override
   void initState() {
     super.initState();
@@ -35,28 +34,28 @@ class _OrderStatusScreenState extends State<OrderStatusScreen> {
     final loading = _ctrl.loading;
 
     return PopScope(
-      canPop: true,
-      onPopInvokedWithResult: (bool didPop, Object? result) {
-        // Si el sistema YA hizo pop (gesto/flecha), no hagas nada extra.
-        if (didPop) return;
-        // Si lo manejas tú, devuelve el resultado al caller (olts_screen)
-        context.pop(_changed); // _changed == true cuando hiciste PUT ok
-      },
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text('Estatus OS ${widget.args.ordenServicioId}'),
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () {
-              final r = GoRouter.of(context);
-              if (r.canPop()) {
-                r.pop(_changed); // devuelve true si hubo cambio
-              } else {
-                r.go('/olts');
-              }
-            },
+        canPop: true,
+        onPopInvokedWithResult: (bool didPop, Object? result) {
+          // Si el sistema YA hizo pop (gesto/flecha), no hagas nada extra.
+          if (didPop) return;
+          // Si lo manejas tú, devuelve el resultado al caller (olts_screen)
+          context.pop(_changed); // _changed == true cuando hiciste PUT ok
+        },
+        child: Scaffold(
+          appBar: AppBar(
+            title: Text('Estatus OS ${widget.args.ordenServicioId}'),
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () {
+                final r = GoRouter.of(context);
+                if (r.canPop()) {
+                  r.pop(_changed); // devuelve true si hubo cambio
+                } else {
+                  r.go('/olts');
+                }
+              },
+            ),
           ),
-        ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: ListView(
@@ -107,7 +106,7 @@ class _OrderStatusScreenState extends State<OrderStatusScreen> {
           ],
         ),
       ),
-    ),
+        ),
     );
   }
 }
