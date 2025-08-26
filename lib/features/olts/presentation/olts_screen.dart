@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import '../../../core/di/locator.dart';
-import 'olts_controller.dart';
-import '../domain/olt_host.dart';
 import 'package:go_router/go_router.dart';
 import '../../olts/domain/olt_host.dart';
+import '../../../core/di/locator.dart';
+import 'olts_controller.dart';
 import '../../order_status/domain/order_status_args.dart';
+import 'widget/semaforo_badge.dart';
 
 class OltsScreen extends StatefulWidget {
   const OltsScreen({super.key});
@@ -15,14 +14,14 @@ class OltsScreen extends StatefulWidget {
 class _OltsScreenState extends State<OltsScreen> {
   late final OltsController _ctrl;
   final _searchCtl = TextEditingController();
-  final Set<int> _revealPassIds = {}; // IDs con pass visible
 
   @override
   void initState() {
     super.initState();
-    _ctrl = locator<OltsController>();
-    _ctrl.addListener(_onState);
-    _ctrl.refresh();
+    _ctrl = locator<OltsController>()..addListener(_onState);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _ctrl.refresh(); // 🔰 carga inicial
+    });
   }
 
   void _onState() => setState(() {});
@@ -34,22 +33,19 @@ class _OltsScreenState extends State<OltsScreen> {
     super.dispose();
   }
 
-  void _toggleReveal(int id) {
-    setState(() {
-      if (_revealPassIds.contains(id)) {
-        _revealPassIds.remove(id);
-      } else {
-        _revealPassIds.add(id);
-      }
-    });
-  }
-  void _refreshOlts() {
-    _ctrl.refresh(); // tu método existente de recarga
+  void _refreshOlts() => _ctrl.refresh();
+
+  bool _onScroll(ScrollNotification sn) {
+    if (sn.metrics.pixels >= sn.metrics.maxScrollExtent - 200) {
+      _ctrl.loadMore();
+    }
+    return false;
   }
 
   @override
   Widget build(BuildContext context) {
     final loading = _ctrl.loading;
+    final loadingMore = _ctrl.loadingMore;
     final error = _ctrl.error;
     final items = _ctrl.items;
 
@@ -67,49 +63,70 @@ class _OltsScreenState extends State<OltsScreen> {
           ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: _ctrl.refresh,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            TextField(
+      body: Column(
+        children: [
+          // Búsqueda
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: TextField(
               controller: _searchCtl,
-              decoration: const InputDecoration(
-                labelText: 'Buscar (usuario, IP, OLT)',
-                prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                hintText: 'Buscar…',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: _searchCtl.text.isEmpty
+                    ? null
+                    : IconButton(
+                  icon: const Icon(Icons.clear),
+                  onPressed: () {
+                    _searchCtl.clear();
+                    _ctrl.setQuery('');
+                  },
+                ),
+                border: const OutlineInputBorder(),
               ),
-              onChanged: (t) => _ctrl.query = t,
+              onChanged: _ctrl.setQuery,
             ),
-            const SizedBox(height: 12),
+          ),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: _ctrl.refresh,
+              child: NotificationListener<ScrollNotification>(
+                onNotification: _onScroll,
 
-            if (loading) const Center(child: Padding(
-              padding: EdgeInsets.symmetric(vertical: 32),
-              child: CircularProgressIndicator(),
-            )),
-
-            if (!loading && error != null)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 24),
-                child: Center(child: Text(error!, style: const TextStyle(color: Colors.red))),
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  itemCount: items.length + (loadingMore ? 1 : 0),
+                  itemBuilder: (context, index) {
+                    if (index >= items.length) {
+                      return const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        child: Center(child: CircularProgressIndicator()),
+                      );
+                    }
+                    final item = items[index];
+                    return _OltCard(item: item, onChanged: _refreshOlts);
+                  },
+                ),
               ),
+            ),
+          ),
 
-            if (!loading && error == null && items.isEmpty)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 24),
-                child: Center(child: Text('Sin resultados')),
-              ),
-
-            if (!loading && error == null && items.isNotEmpty)
-              ...items.map((o) => _OltCard(
-                item: o,
-                onChanged:_refreshOlts,
-                revealed: _revealPassIds.contains(o.asignadaId),
-                onToggleReveal: () => _toggleReveal(o.asignadaId),
-              )),
-            const SizedBox(height: 24),
-          ],
-        ),
+          if (loading && items.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+          if (!loading && error != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Text(error, style: const TextStyle(color: Colors.red)),
+            ),
+          if (!loading && !loadingMore && !_ctrl.hasMore && items.isNotEmpty)
+            const Padding(
+              padding: EdgeInsets.only(bottom: 12),
+              child: Text('No hay más resultados'),
+            ),
+        ],
       ),
     );
   }
@@ -118,14 +135,11 @@ class _OltsScreenState extends State<OltsScreen> {
 class _OltCard extends StatelessWidget {
   final OltHost item;
   final VoidCallback onChanged;
-  final bool revealed;
-  final VoidCallback onToggleReveal;
 
-  const _OltCard({required this.item,required this.onChanged, required this.revealed, required this.onToggleReveal});
+  const _OltCard({super.key,required this.item,required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
-    final passText = revealed ? item.folio : '•' * (item.folio.length.clamp(4, 16));
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -135,9 +149,8 @@ class _OltCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(children: [
-              Expanded(child: Text('Ordenes ${item.asignadaId}', style: Theme.of(context).textTheme.titleMedium)),
-              Chip(label: Text(item.folio)),
-              IconButton(tooltip: 'Copiar IP', icon: const Icon(Icons.copy), onPressed: () { /* copiar IP */ }),
+              Expanded(child: Text('Orden ${item.asignadaId}', style: Theme.of(context).textTheme.titleMedium)),
+              Chip(label: Text(item.folio))
             ]),
             const SizedBox(height: 8),
             Row(children: [
@@ -171,8 +184,9 @@ class _OltCard extends StatelessWidget {
             ]),
             const SizedBox(height: 6),
             Row(children: [
-              const Icon(Icons.person,size: 16),const SizedBox(width: 6),
-              Expanded(child: Text('Semaforo: ${item.semaforo}'))
+              const Icon(Icons.traffic, size: 16,),
+              const SizedBox(width: 6,),
+              SemaforoBadge(value: item.semaforo)
             ]),
             const SizedBox(height: 12),
             Row(

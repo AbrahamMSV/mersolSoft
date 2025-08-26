@@ -37,8 +37,6 @@ class OltPhotoService {
       },
       fileField: 'FileStream',
       filePath: filePath,
-      // filename opcional: si quieres forzar nombre/extension
-      // filename: 'foto.$extensionArchivo',
     );
   }
 }

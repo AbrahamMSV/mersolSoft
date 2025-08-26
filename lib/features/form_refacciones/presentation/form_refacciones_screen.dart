@@ -90,8 +90,7 @@ class _FormRefaccionesScreenState extends State<FormRefaccionesScreen> {
                 },
                 itemBuilder: (context, s) => ListTile(
                   title: Text(s.articulo),
-                  subtitle: Text(s.descripcion ?? '-'),
-                  trailing: Text('Stock: ${s.stock}'),
+                  subtitle: Text(s.descripcion ?? '-')
                 ),
                 onSelected: (s) {
                   _ctrl.setSeleccion(s); // guardamos Articulo y Descripcion
@@ -163,6 +162,23 @@ class _FormRefaccionesScreenState extends State<FormRefaccionesScreen> {
                       : const Icon(Icons.check),
                   label: Text(loading ? 'Enviando...' : 'Listo'),
                   onPressed: loading ? null : _submit,
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  icon: const Icon(Icons.edit),
+                  label: const Text('Editable'),
+                  onPressed: () async {
+                    // Navega a la pantalla editable
+                    final saved = await context.push('/refacciones/editables',extra: widget.ordenServicioId);
+
+                    // Si guardó, burbujea hacia atrás para volver a card_refacciones
+                    if (saved == true && context.mounted) {
+                      context.pop(true); // ← cierra form_refacciones devolviendo “true” al listado
+                    }
+                  },
                 ),
               ),
             ],

@@ -65,7 +65,7 @@ class HttpClient {
       final file = await http.MultipartFile.fromPath(fileField, filePath, filename: filename);
       request.files.add(file);
 
-      final streamed = await request.send().timeout(timeout);
+      final streamed = await _client.send(request).timeout(timeout);
       final res = await http.Response.fromStream(streamed);
       if (res.statusCode >= 200 && res.statusCode < 300) {
         return (jsonDecode(res.body) as Map<String, dynamic>);

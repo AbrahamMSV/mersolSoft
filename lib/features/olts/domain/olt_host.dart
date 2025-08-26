@@ -24,16 +24,17 @@ class OltHost {
   });
 
   factory OltHost.fromJson(Map<String, dynamic> json) => OltHost(
-    asignadaId: json['AsignadaID'] as int,
-    ordenServicioId: json['OrdenServicioID'] as int,
-    folio: json['Folio'] as String,
-    recibe :json['Recibe'] as String,
-    tipoServicio: json['ServicioTipoServicio'] as String,
-    fechaRecepcion: json['FechaRecepcion'] as String,
-    articulo: json['Articulo'] as String,
-    marca: json['Marca'] as String,
-    semaforo: json['Semaforo'] as String,
-    statusOrderId: (json['StatusOrderID'] as num?)?.toInt() ?? (json['StatusOrderId'] as num?)?.toInt(),
+    asignadaId: (json['AsignadaID'] as num?)?.toInt() ?? 0,
+    ordenServicioId: (json['OrdenServicioID'] as num?)?.toInt() ?? 0,
+    folio: (json['Folio'] as String?) ?? '',
+    recibe: (json['Recibe'] as String?) ?? '',
+    tipoServicio: (json['ServicioTipoServicio'] as String?) ?? '',
+    fechaRecepcion: (json['FechaRecepcion'] as String?) ?? '',
+    articulo: (json['Articulo'] as String?) ?? '',
+    marca: (json['Marca'] as String?) ?? '',
+    semaforo: (json['Semaforo'] as String?) ?? '',
+    statusOrderId: (json['StatusOrderID'] as num?)?.toInt()
+        ?? (json['StatusOrderId'] as num?)?.toInt(),
   );
 
   Map<String, dynamic> toJson() => {

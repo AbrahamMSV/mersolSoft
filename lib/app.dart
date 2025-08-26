@@ -13,6 +13,7 @@ import 'features/card_refacciones/presentation/refacciones_screen.dart';
 import 'features/form_refacciones/presentation/form_refacciones_screen.dart';
 import 'features/order_status/domain/order_status_args.dart';
 import 'features/order_status/presentation/order_status_screen.dart';
+import 'features/form_editable/presentation/form_editable_screen.dart';
 final _auth = locator<AuthController>();
 
 class _HomeScaffold extends StatelessWidget {
@@ -163,11 +164,31 @@ final router = GoRouter(
         );
       },
     ),
+    GoRoute(
+      path: '/refacciones/editables',
+      builder: (context, state) {
+        final extra = state.extra;
+        final osId = extra is int ? extra : null;
+        if (osId == null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Falta OrdenServicioID')),
+            );
+            GoRouter.of(context).pop();
+          });
+          return const SizedBox.shrink();
+        }
+        return _HomeScaffold(
+          current: '/refacciones/editables',
+          child: FormEditableScreen(ordenServicioId: osId),
+        );
+      },
+    ),
   ],
   redirect: (context, state) {
     final loggingIn = state.fullPath == '/login';
     if (!_auth.isLoggedIn && !loggingIn) return '/login';
-    if (_auth.isLoggedIn && loggingIn) return '/user';
+    if (_auth.isLoggedIn && loggingIn) return '/olts';
     return null;
   },
   refreshListenable: _auth,

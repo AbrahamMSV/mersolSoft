@@ -1,7 +1,10 @@
+import 'dart:io' as io;
 import 'package:get_it/get_it.dart';
 import '../network/http_client.dart';
 import '../config/app_config.dart';
-
+import 'package:http/http.dart' as http;
+import 'package:http/io_client.dart' as http_io;
+import '../network/http_client.dart' as core_http;
 // Auth / User / OLTs (existentes)
 import '../../features/user/data/user_service.dart';
 import '../../features/user/data/user_repository.dart';
@@ -39,10 +42,27 @@ import '../../features/form_refacciones/presentation/form_refacciones_controller
 import '../../features/order_status/data/order_status_service.dart';
 import '../../features/order_status/data/order_status_repository.dart';
 import '../../features/order_status/presentation/order_status_controller.dart';
+//REFACCIONES EDITABLE
+import '../../features/form_editable/data/editable_refaccion_service.dart';
+import '../../features/form_editable/data/editable_refaccion_repository.dart';
+import '../../features/form_editable/presentation/form_editable_controller.dart';
 final locator = GetIt.instance;
 void setupLocator() {
   // Core
-  locator.registerLazySingleton<HttpClient>(() => HttpClient());
+  locator.registerLazySingleton<core_http.HttpClient>(() {
+    // Si quieres permitir MÁS de un host, agrégalos aquí:
+    const allowedHost = '187.210.65.46';
+
+    final ioHttp = io.HttpClient()
+      ..badCertificateCallback = (io.X509Certificate cert, String host, int port) {
+        // Acepta ÚNICAMENTE el certificado presentado por esa IP/host.
+        // (Esto desactiva la verificación de CA/SAN SOLO para ese host.)
+        return host == allowedHost;
+      };
+
+    final baseClient = http_io.IOClient(ioHttp);
+    return core_http.HttpClient(client: baseClient);
+  });
 
   // Services
   locator.registerLazySingleton<UserService>(
@@ -139,4 +159,19 @@ void setupLocator() {
   ));
   locator.registerLazySingleton<OrderStatusRepository>(() => OrderStatusRepository(locator<OrderStatusService>()));
   locator.registerFactory<OrderStatusController>(() => OrderStatusController(locator<OrderStatusRepository>()));
+  //REFACCIONES EDITABLE
+  locator.registerLazySingleton<EditableRefaccionService>(() => EditableRefaccionService(
+    locator<HttpClient>(),
+    baseUrl: AppConfig.baseUrl,
+    csaPath: AppConfig.csaPath,
+    agregarPath: AppConfig.refaccionesAgregarPath, // 'AgregarRefaccionServicio'
+  ));
+
+  locator.registerLazySingleton<EditableRefaccionRepository>(
+          () => EditableRefaccionRepository(locator<EditableRefaccionService>())
+  );
+
+  locator.registerFactory<FormEditableController>(
+          () => FormEditableController(locator<EditableRefaccionRepository>())
+  );
 }
