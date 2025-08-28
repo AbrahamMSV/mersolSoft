@@ -9,6 +9,7 @@ class OltHost {
   final String semaforo;
   final int ordenServicioId;
   final int? statusOrderId;
+  final String fallaReportada;
 
   const OltHost({
     required this.asignadaId,
@@ -21,6 +22,7 @@ class OltHost {
     required this.semaforo,
     required this.ordenServicioId,
     this.statusOrderId,
+    required this.fallaReportada
   });
 
   factory OltHost.fromJson(Map<String, dynamic> json) => OltHost(
@@ -35,6 +37,7 @@ class OltHost {
     semaforo: (json['Semaforo'] as String?) ?? '',
     statusOrderId: (json['StatusOrderID'] as num?)?.toInt()
         ?? (json['StatusOrderId'] as num?)?.toInt(),
+    fallaReportada: (json['FallaReportada'] as String?) ?? ''
   );
 
   Map<String, dynamic> toJson() => {
@@ -47,6 +50,7 @@ class OltHost {
     'Marca':marca,
     'Semaforo':semaforo,
     'OrdenServicioID':ordenServicioId,
-    'StatusOrderID':statusOrderId
+    'StatusOrderID':statusOrderId,
+    'FallaReportada':fallaReportada
   };
 }

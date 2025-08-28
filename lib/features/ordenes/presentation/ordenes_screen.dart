@@ -141,7 +141,7 @@ class _OltCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
+    final textTheme = Theme.of(context).textTheme;
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
@@ -189,6 +189,33 @@ class _OltCard extends StatelessWidget {
               const SizedBox(width: 6,),
               SemaforoBadge(value: item.semaforo)
             ]),
+            const SizedBox(height: 12),
+            if (item.fallaReportada.trim().isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.only(top: 2),
+                    child: Icon(Icons.report_problem_outlined, size: 18),
+                  ),
+                  const SizedBox(width: 6),
+                  // Usamos Expanded para que respete el ancho de la card
+                  Expanded(
+                    child: Text(
+                      item.fallaReportada,
+                      style: textTheme.bodyMedium?.copyWith(
+                        // un gris suave para diferenciarlo del resto
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                      ),
+                      softWrap: true,
+                      maxLines: 4,                    // tope de líneas
+                      overflow: TextOverflow.ellipsis, // corta con "…"
+                    ),
+                  ),
+                ],
+              ),
+            ],
             const SizedBox(height: 12),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
