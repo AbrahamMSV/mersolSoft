@@ -3,10 +3,11 @@ import 'package:go_router/go_router.dart';
 import '../../../core/di/locator.dart';
 import 'refacciones_controller.dart';
 import '../domain/refaccion_item.dart';
-
+import '../../card_refacciones/domain/refaccion_args.dart';
 class RefaccionesScreen extends StatefulWidget {
   final int ordenServicioId;
-  const RefaccionesScreen({super.key, required this.ordenServicioId});
+  final int? statusOrderId;
+  const RefaccionesScreen({super.key, required this.ordenServicioId,this.statusOrderId});
 
   @override
   State<RefaccionesScreen> createState() => _RefaccionesScreenState();
@@ -26,7 +27,15 @@ class _RefaccionesScreenState extends State<RefaccionesScreen> {
   void _onState() => setState(() {});
   @override
   void dispose() { _ctrl.removeListener(_onState); super.dispose(); }
-
+  void _nuevo() {
+    context.push(
+      '/refacciones/nuevo',
+      extra: RefaccionesArgs(
+        ordenServicioId: widget.ordenServicioId,
+        statusOrderId: widget.statusOrderId,
+      ),
+    );
+  }
   @override
   Widget build(BuildContext context) {
     final loading = _ctrl.loading;
@@ -40,7 +49,7 @@ class _RefaccionesScreenState extends State<RefaccionesScreen> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
             final r = GoRouter.of(context);
-            if (r.canPop()) r.pop(); else r.go('/olts');
+            if (r.canPop()) r.pop(); else r.go('/ordenes');
           },
         ),
       ),
@@ -69,13 +78,9 @@ class _RefaccionesScreenState extends State<RefaccionesScreen> {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        icon: const Icon(Icons.add),
-        label: const Text('Agregar'),
-        onPressed: () async {
-          final ok = await context.push('/refacciones/nuevo', extra: widget.ordenServicioId);
-          if (ok == true && mounted) _ctrl.refresh();
-        },
+      floatingActionButton: FloatingActionButton(
+        onPressed: _nuevo,
+        child: const Icon(Icons.add),
       ),
     );
   }

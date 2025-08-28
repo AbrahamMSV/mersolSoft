@@ -51,7 +51,7 @@ class _OrderStatusScreenState extends State<OrderStatusScreen> {
                 if (r.canPop()) {
                   r.pop(_changed); // devuelve true si hubo cambio
                 } else {
-                  r.go('/olts');
+                  r.go('/ordenes');
                 }
               },
             ),
@@ -69,7 +69,7 @@ class _OrderStatusScreenState extends State<OrderStatusScreen> {
               controller: _commentCtl,
               maxLines: 3,
               decoration: const InputDecoration(
-                labelText: 'Comentario (opcional)',
+                labelText: 'Comentario',
                 border: OutlineInputBorder(),
               ),
               onChanged: _ctrl.setComentario,

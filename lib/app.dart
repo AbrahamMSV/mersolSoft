@@ -3,23 +3,23 @@ import 'package:go_router/go_router.dart';
 import 'core/di/locator.dart';
 import 'features/auth/presentation/auth_controller.dart';
 import 'features/auth/presentation/login_screen.dart';
-import 'features/user/presentation/user_screen.dart';
-import 'features/olts/presentation/olts_screen.dart';
-import 'features/diagnostico_ordenservicio/presentation/diagnostico_screen.dart';
-import 'features/olt_photo/presentation/olt_photo_form_screen.dart';
-import 'features/olts/domain/olt_host.dart';
+import 'features/ordenes/presentation/ordenes_screen.dart';
+import 'features/diagnostico_orden/presentation/diagnostico_screen.dart';
+import 'features/ordenes_foto/presentation/ordenes_foto_form_screen.dart';
+import 'features/ordenes/domain/olt_host.dart';
 import 'features/form_diagnostico/presentation/form_diagnostico_screen.dart';
 import 'features/card_refacciones/presentation/refacciones_screen.dart';
 import 'features/form_refacciones/presentation/form_refacciones_screen.dart';
-import 'features/order_status/domain/order_status_args.dart';
-import 'features/order_status/presentation/order_status_screen.dart';
-import 'features/form_editable/presentation/form_editable_screen.dart';
+import 'features/card_refacciones/domain/refaccion_args.dart';
+import 'features/ordenes_status/domain/order_status_args.dart';
+import 'features/ordenes_status/presentation/order_status_screen.dart';
+
 final _auth = locator<AuthController>();
 
 class _HomeScaffold extends StatelessWidget {
   final Widget child;
   final String current;
-  const _HomeScaffold({required this.child, required this.current});
+  const _HomeScaffold({required this.child, required this.current, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -29,15 +29,20 @@ class _HomeScaffold extends StatelessWidget {
           child: ListView(
             children: [
               const DrawerHeader(child: Text('Menú')),
-              ListTile(selected: current == '/user', leading: const Icon(Icons.person), title: const Text('Inicio'), onTap: () => context.go('/user')),
-              ListTile(selected: current == '/olts', leading: const Icon(Icons.memory), title: const Text('Ordenes'), onTap: () => context.go('/olts')),
+              ListTile(
+                selected: current == '/ordenes',
+                leading: const Icon(Icons.assignment), // icono más acorde
+                title: const Text('Órdenes'),
+                onTap: () => context.go('/ordenes'),
+              ),
               const Divider(),
               ListTile(
                 leading: const Icon(Icons.logout),
                 title: const Text('Cerrar sesión'),
                 onTap: () async {
                   await locator<AuthController>().logout();
-                  context.go('/login');
+                  // al cerrar sesión, siempre al login
+                  if (context.mounted) context.go('/login');
                 },
               ),
             ],
@@ -52,21 +57,46 @@ class _HomeScaffold extends StatelessWidget {
 final router = GoRouter(
   initialLocation: '/login',
   routes: [
+    // Auth
     GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
-    GoRoute(path: '/user', builder: (_, __) => const _HomeScaffold(current: '/user', child: UserScreen())),
-    GoRoute(path: '/olts', builder: (_, __) => const _HomeScaffold(current: '/olts', child: OltsScreen())),
-    // NUEVO: formulario de foto; recibimos el OltHost por extra
+
+    // ÓRDENES (antes /olts)
     GoRoute(
-      path: '/olts/foto',
+      path: '/ordenes',
+      builder: (_, __) => const _HomeScaffold(
+        current: '/ordenes',
+        child: OrdenesScreen(), // seguimos usando tu OltsScreen como UI
+      ),
+    ),
+
+    // Alias opcional por compatibilidad: /olts → /ordenes
+    GoRoute(
+      path: '/ordenes',
+      redirect: (_, __) => '/ordenes',
+    ),
+
+    // FOTO desde ordenes (alias nuevo)
+    GoRoute(
+      path: '/ordenes/foto',
       builder: (context, state) {
         final item = state.extra as OltHost;
-        return _HomeScaffold(current: '/olts', child: OltPhotoFormScreen(item: item));
+        return _HomeScaffold(
+          current: '/ordenes',
+          child: OltPhotoFormScreen(item: item),
+        );
       },
     ),
+    // Alias opcional: si en algún punto aún navegan a /olts/foto
+    GoRoute(
+      path: '/ordenes/foto',
+      redirect: (context, state) => '/ordenes/foto',
+    ),
+
+    // Diagnósticos
     GoRoute(
       path: '/diagnosticos',
       builder: (context, state) {
-        final ordenId = state.extra as int; // ← viene desde la card OLT
+        final ordenId = state.extra as int;
         return _HomeScaffold(
           current: '/diagnosticos',
           child: DiagnosticoScreen(ordenServicioId: ordenId),
@@ -77,8 +107,6 @@ final router = GoRouter(
       path: '/diagnosticos/foto',
       builder: (context, state) {
         final extra = state.extra;
-
-        // Acepta int directo o string numérica, si no, queda null
         final int? diagnosticoId = switch (extra) {
           final int v => v,
           final String s => int.tryParse(s),
@@ -87,8 +115,8 @@ final router = GoRouter(
         return _HomeScaffold(
           current: '/diagnosticos',
           child: OltPhotoFormScreen(
-            item: null,                    // ya no venimos desde OLT
-            diagnosticoId: diagnosticoId,  // <<-- ¡aquí va el ID real!
+            item: null,
+            diagnosticoId: diagnosticoId,
           ),
         );
       },
@@ -96,47 +124,100 @@ final router = GoRouter(
     GoRoute(
       path: '/diagnosticos/nuevo',
       builder: (context, state) {
-        final osId = state.extra as int; // OrdenServicioID
+        final osId = state.extra as int;
         return _HomeScaffold(
           current: '/diagnosticos',
           child: FormDiagnosticoScreen(ordenServicioId: osId),
         );
       },
     ),
+
+    // Refacciones
+
     GoRoute(
       path: '/refacciones',
       builder: (context, state) {
-        final osId = state.extra as int?;  // robustez: podría venir string
-        if (osId == null) {
+        final extra = state.extra;
+        RefaccionesArgs? args;
+
+        if (extra is RefaccionesArgs) {
+          args = extra;
+        } else if (extra is int) {
+          args = RefaccionesArgs(ordenServicioId: extra);
+        } else if (extra is Map) {
+          final os = extra['ordenServicioId'];
+          final st = extra['statusOrderId'];
+          if (os is int) {
+            args = RefaccionesArgs(
+              ordenServicioId: os,
+              statusOrderId: st is int ? st : null,
+            );
+          }
+        }
+
+        if (args == null) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Falta OrdenServicioID')));
-            GoRouter.of(context).go('/olts');
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Faltan parámetros (OrdenServicioID)')),
+            );
+            GoRouter.of(context).go('/ordenes');
           });
           return const SizedBox.shrink();
         }
+
         return _HomeScaffold(
           current: '/refacciones',
-          child: RefaccionesScreen(ordenServicioId: osId),
+          child: RefaccionesScreen(
+            ordenServicioId: args.ordenServicioId,
+            statusOrderId: args.statusOrderId, // 👈 se pasa al screen
+          ),
         );
       },
     ),
+
     GoRoute(
       path: '/refacciones/nuevo',
       builder: (context, state) {
-        final osId = state.extra as int?;
-        if (osId == null) {
+        final extra = state.extra;
+        RefaccionesArgs? args;
+
+        if (extra is RefaccionesArgs) {
+          args = extra;
+        } else if (extra is int) {
+          args = RefaccionesArgs(ordenServicioId: extra);
+        } else if (extra is Map) {
+          final os = extra['ordenServicioId'];
+          final st = extra['statusOrderId'];
+          if (os is int) {
+            args = RefaccionesArgs(
+              ordenServicioId: os,
+              statusOrderId: st is int ? st : null,
+            );
+          }
+        }
+
+        if (args == null) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Falta OrdenServicioID')));
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Faltan parámetros (OrdenServicioID)')),
+            );
             GoRouter.of(context).go('/refacciones');
           });
           return const SizedBox.shrink();
         }
+
         return _HomeScaffold(
           current: '/refacciones',
-          child: FormRefaccionesScreen(ordenServicioId: osId),
+          child: FormRefaccionesScreen(
+            ordenServicioId: args.ordenServicioId,
+            statusOrderId: args.statusOrderId, // 👈 se pasa al form
+          ),
         );
       },
     ),
+
+
+    // Estatus
     GoRoute(
       path: '/estatus',
       builder: (context, state) {
@@ -153,42 +234,23 @@ final router = GoRouter(
         }
         if (args == null) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Faltan parámetros de estatus')));
-            GoRouter.of(context).go('/olts');
-          });
-          return const SizedBox.shrink();
-        }
-        return _HomeScaffold(
-          current: '/estatus',
-          child: OrderStatusScreen(args: args),
-        );
-      },
-    ),
-    GoRoute(
-      path: '/refacciones/editables',
-      builder: (context, state) {
-        final extra = state.extra;
-        final osId = extra is int ? extra : null;
-        if (osId == null) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Falta OrdenServicioID')),
+              const SnackBar(content: Text('Faltan parámetros de estatus')),
             );
-            GoRouter.of(context).pop();
+            GoRouter.of(context).go('/ordenes');
           });
           return const SizedBox.shrink();
         }
-        return _HomeScaffold(
-          current: '/refacciones/editables',
-          child: FormEditableScreen(ordenServicioId: osId),
-        );
+        return _HomeScaffold(current: '/estatus', child: OrderStatusScreen(args: args));
       },
     ),
   ],
+
+  // Redirecciones globales de sesión
   redirect: (context, state) {
     final loggingIn = state.fullPath == '/login';
     if (!_auth.isLoggedIn && !loggingIn) return '/login';
-    if (_auth.isLoggedIn && loggingIn) return '/olts';
+    if (_auth.isLoggedIn && loggingIn) return '/ordenes'; // ← al iniciar sesión: directo a Órdenes
     return null;
   },
   refreshListenable: _auth,
@@ -198,6 +260,9 @@ class MyApp extends StatelessWidget {
   const MyApp({super.key});
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(title: 'App Soporte', routerConfig: router);
+    return MaterialApp.router(
+      title: 'App Soporte',
+      routerConfig: router,
+    );
   }
 }

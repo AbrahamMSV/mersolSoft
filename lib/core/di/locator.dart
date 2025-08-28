@@ -5,27 +5,24 @@ import '../config/app_config.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart' as http_io;
 import '../network/http_client.dart' as core_http;
-// Auth / User / OLTs (existentes)
-import '../../features/user/data/user_service.dart';
-import '../../features/user/data/user_repository.dart';
 import '../../features/auth/data/auth_service.dart';
 import '../../features/auth/data/auth_repository.dart';
 import '../../features/auth/presentation/auth_controller.dart';
-import '../../features/olts/data/olts_service.dart';
-import '../../features/olts/data/olts_repository.dart';
-import '../../features/olts/presentation/olts_controller.dart';
+import '../../features/ordenes/data/ordenes_service.dart';
+import '../../features/ordenes/data/ordenes_repository.dart';
+import '../../features/ordenes/presentation/ordenes_controller.dart';
 
 // NUEVO: foto por OLT
-import '../../features/olt_photo/data/olt_photo_service.dart';
-import '../../features/olt_photo/data/olt_photo_repository.dart';
-import '../../features/olt_photo/presentation/olt_photo_controller.dart';
+import '../../features/ordenes_foto/data/ordenes_foto_service.dart';
+import '../../features/ordenes_foto/data/ordenes_foto_repository.dart';
+import '../../features/ordenes_foto/presentation/ordenes_foto_controller.dart';
 //SESSION STORE
 import '../session/session_store.dart';
 
 //DIAGNOSTICO ORDENSERVICIO
-import '../../features/diagnostico_ordenservicio/data/diagnostico_service.dart';
-import '../../features/diagnostico_ordenservicio/data/diagnostico_repository.dart';
-import '../../features/diagnostico_ordenservicio/presentation/diagnostico_controller.dart';
+import '../../features/diagnostico_orden/data/diagnostico_service.dart';
+import '../../features/diagnostico_orden/data/diagnostico_repository.dart';
+import '../../features/diagnostico_orden/presentation/diagnostico_controller.dart';
 //FORM DIAGNOSTICO
 import '../../features/form_diagnostico/data/form_diagnostico_service.dart';
 import '../../features/form_diagnostico/data/form_diagnostico_repository.dart';
@@ -39,13 +36,9 @@ import '../../features/form_refacciones/data/form_refacciones_service.dart';
 import '../../features/form_refacciones/data/form_refacciones_repository.dart';
 import '../../features/form_refacciones/presentation/form_refacciones_controller.dart';
 //ORDER STATUS
-import '../../features/order_status/data/order_status_service.dart';
-import '../../features/order_status/data/order_status_repository.dart';
-import '../../features/order_status/presentation/order_status_controller.dart';
-//REFACCIONES EDITABLE
-import '../../features/form_editable/data/editable_refaccion_service.dart';
-import '../../features/form_editable/data/editable_refaccion_repository.dart';
-import '../../features/form_editable/presentation/form_editable_controller.dart';
+import '../../features/ordenes_status/data/order_status_service.dart';
+import '../../features/ordenes_status/data/order_status_repository.dart';
+import '../../features/ordenes_status/presentation/order_status_controller.dart';
 final locator = GetIt.instance;
 void setupLocator() {
   // Core
@@ -64,10 +57,6 @@ void setupLocator() {
     return core_http.HttpClient(client: baseClient);
   });
 
-  // Services
-  locator.registerLazySingleton<UserService>(
-        () => UserService(locator<HttpClient>(), baseUrl: AppConfig.baseUrl),
-  );
   locator.registerLazySingleton<AuthService>(
         () => AuthService(locator<HttpClient>(), baseUrl: AppConfig.baseUrl, asignar: AppConfig.asignarPath),
   );
@@ -89,7 +78,6 @@ void setupLocator() {
     asignarPath: AppConfig.asignarPath,
   ));
   // Repositories
-  locator.registerLazySingleton<UserRepository>(() => UserRepository(locator<UserService>()));
   locator.registerLazySingleton<AuthRepository>(() => AuthRepository(locator<AuthService>()));
   locator.registerLazySingleton<OltsRepository>(() => OltsRepository(locator<OltsService>()));
   // NUEVO
@@ -159,19 +147,5 @@ void setupLocator() {
   ));
   locator.registerLazySingleton<OrderStatusRepository>(() => OrderStatusRepository(locator<OrderStatusService>()));
   locator.registerFactory<OrderStatusController>(() => OrderStatusController(locator<OrderStatusRepository>()));
-  //REFACCIONES EDITABLE
-  locator.registerLazySingleton<EditableRefaccionService>(() => EditableRefaccionService(
-    locator<HttpClient>(),
-    baseUrl: AppConfig.baseUrl,
-    csaPath: AppConfig.csaPath,
-    agregarPath: AppConfig.refaccionesAgregarPath, // 'AgregarRefaccionServicio'
-  ));
 
-  locator.registerLazySingleton<EditableRefaccionRepository>(
-          () => EditableRefaccionRepository(locator<EditableRefaccionService>())
-  );
-
-  locator.registerFactory<FormEditableController>(
-          () => FormEditableController(locator<EditableRefaccionRepository>())
-  );
 }

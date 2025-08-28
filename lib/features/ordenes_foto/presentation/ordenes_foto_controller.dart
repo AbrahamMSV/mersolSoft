@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../../../core/errors/app_exception.dart';
 import '../../../core/result/result.dart';
-import '../data/olt_photo_repository.dart';
+import '../data/ordenes_foto_repository.dart';
 
 class OltPhotoController extends ChangeNotifier {
   final OltPhotoRepository _repo;

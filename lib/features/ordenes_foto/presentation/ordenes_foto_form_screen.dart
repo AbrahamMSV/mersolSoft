@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/di/locator.dart';
-import '../../olts/domain/olt_host.dart';
-import 'olt_photo_controller.dart';
+import '../../ordenes/domain/olt_host.dart';
+import 'ordenes_foto_controller.dart';
 import 'camera_capture_screen.dart';
 
 class OltPhotoFormScreen extends StatefulWidget {
@@ -86,7 +86,7 @@ class _OltPhotoFormScreenState extends State<OltPhotoFormScreen> {
               if (widget.diagnosticoId != null) {
                 router.go('/diagnosticos');
               } else {
-                router.go('/olts');
+                router.go('/ordenes');
               }
             }
           },

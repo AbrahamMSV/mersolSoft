@@ -46,7 +46,7 @@ class _DiagnosticoScreenState extends State<DiagnosticoScreen> {
             if (router.canPop()) {
               router.pop();
             } else {
-              router.go('/olts'); // fallback si llegaste con go/DEEPLINK
+              router.go('/ordenes'); // fallback si llegaste con go/DEEPLINK
             }
           },
         ),

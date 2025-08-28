@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../olts/domain/olt_host.dart';
+import '../../ordenes/domain/olt_host.dart';
 import '../../../core/di/locator.dart';
-import 'olts_controller.dart';
-import '../../order_status/domain/order_status_args.dart';
+import 'ordenes_controller.dart';
+import '../../ordenes_status/domain/order_status_args.dart';
 import 'widget/semaforo_badge.dart';
+import '../../card_refacciones/domain/refaccion_args.dart';
 
-class OltsScreen extends StatefulWidget {
-  const OltsScreen({super.key});
-  @override State<OltsScreen> createState() => _OltsScreenState();
+class OrdenesScreen extends StatefulWidget {
+  const OrdenesScreen({super.key});
+  @override State<OrdenesScreen> createState() => _OltsScreenState();
 }
 
-class _OltsScreenState extends State<OltsScreen> {
+class _OltsScreenState extends State<OrdenesScreen> {
   late final OltsController _ctrl;
   final _searchCtl = TextEditingController();
 
@@ -200,7 +201,7 @@ class _OltCard extends StatelessWidget {
                     final osId = item.ordenServicioId;
                     if (osId == null || osId == 0) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Este OLT no tiene OrdenServicioID')),
+                        const SnackBar(content: Text('Este Orden de servicio no tiene OrdenServicioID')),
                       );
                       return;
                     }
@@ -218,13 +219,20 @@ class _OltCard extends StatelessWidget {
                   label: const Text('Refacciones'),
                   onPressed: () {
                     final osId = item.ordenServicioId;
+                    final stId = item.statusOrderId;
                     if (osId == null || osId == 0) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Este OLT no tiene OrdenServicioID')),
+                        const SnackBar(content: Text('Este Ordene servicio no tiene OrdenServicioID')),
                       );
                       return;
                     }
-                    context.push('/refacciones', extra: osId); // push para poder volver
+                    context.push(
+                      '/refacciones',
+                      extra: RefaccionesArgs(
+                        ordenServicioId: osId,
+                        statusOrderId: stId,
+                      ),
+                    ); // push para poder volver
                   },
                 ),
                 const SizedBox(width: 8),
@@ -236,7 +244,7 @@ class _OltCard extends StatelessWidget {
                     final st   = item.statusOrderId;
                     if (osId == null || osId == 0) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Este OLT no tiene OrdenServicioID')),
+                        const SnackBar(content: Text('Este Orden servicio no tiene OrdenServicioID')),
                       );
                       return;
                     }

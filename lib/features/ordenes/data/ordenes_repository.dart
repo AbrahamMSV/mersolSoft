@@ -7,7 +7,7 @@ import '../../../core/session/session_store.dart';
 import '../../../core/paging/page_result.dart';
 import '../domain/csa_datatable_payload.dart';
 import '../domain/olt_host.dart';
-import 'olts_service.dart';
+import 'ordenes_service.dart';
 
 class OltsRepository {
   final OltsService _service;

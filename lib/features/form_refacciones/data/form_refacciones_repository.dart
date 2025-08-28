@@ -8,21 +8,37 @@ import 'form_refacciones_service.dart';
 class FormRefaccionesRepository {
   final FormRefaccionesService _service;
   FormRefaccionesRepository(this._service);
+
   Future<Result<void>> crear({
     required int ordenServicioId,
     required ArticuloSuggestion seleccionado,
     required num cantidad,
     required String entrega,
+    String? descripcionInput, // 👈 NUEVO: descripción escrita en el form
   }) async {
     try {
       final store = locator<SessionStore>();
       final idSucursal = store.session?.profile?.idSucursal ?? 0;
 
-      final payload = {
+      final isEditable = seleccionado.articulo.trim().toUpperCase() == 'CRM-000001';
+
+      final payload = isEditable
+          ? <String, dynamic>{
+        'OrdenServicioID': ordenServicioId,
+        'Articulo': seleccionado.articulo,   // ← editable fijo
+        'Cantidad': cantidad,
+        'Descripcion': descripcionInput ?? seleccionado.descripcion,
+        'Entrega': entrega,
+        'Unidad': 'PZA',            // ← editable fijo
+        'IsEditable': 1,            // ← editable fijo
+        'SucursalID': idSucursal,
+        'PrecioUnitario': '0.00',   // ← editable fijo
+      }
+          : <String, dynamic>{
         'OrdenServicioID': ordenServicioId,
         'Articulo': seleccionado.articulo,
         'Cantidad': cantidad,
-        'Descripcion': seleccionado.descripcion ?? '',
+        'Descripcion': descripcionInput ?? (seleccionado.descripcion ?? ''),
         'Entrega': entrega,
         'Unidad': '',
         'IsEditable': 0,
@@ -31,10 +47,11 @@ class FormRefaccionesRepository {
 
       final json = await _service.addRefaccionServicio(payload);
 
-      // La API puede devolver 200 o 400 pero siempre con JSON:
       final isError = (json['IsError'] as bool?) ?? (json['isError'] as bool?) ?? false;
       if (isError) {
-        return Err(ServerException((json['Message'] as String?) ?? (json['message'] as String?) ?? 'No se pudo agregar la refacción'));
+        return Err(ServerException(
+          (json['Message'] as String?) ?? (json['message'] as String?) ?? 'No se pudo agregar la refacción',
+        ));
       }
       return Ok(null);
     } on AppException catch (e) {
@@ -43,6 +60,7 @@ class FormRefaccionesRepository {
       return Err(ParsingException('Error al interpretar respuesta: $e'));
     }
   }
+
   Future<Result<List<ArticuloSuggestion>>> buscar(String query) async {
     try {
       if (query.trim().isEmpty) return Ok(const []);

@@ -5,10 +5,13 @@ import 'package:go_router/go_router.dart';
 import '../../../core/di/locator.dart';
 import 'form_refacciones_controller.dart';
 import '../domain/articulo_suggestion.dart';
+import '../../ordenes_status/domain/order_status_args.dart';
+import '../../../core/widgets/app_dialogs.dart';
 
 class FormRefaccionesScreen extends StatefulWidget {
   final int ordenServicioId;
-  const FormRefaccionesScreen({super.key, required this.ordenServicioId});
+  final int? statusOrderId;
+  const FormRefaccionesScreen({super.key, required this.ordenServicioId,this.statusOrderId});
 
   @override
   State<FormRefaccionesScreen> createState() => _FormRefaccionesScreenState();
@@ -19,6 +22,7 @@ class _FormRefaccionesScreenState extends State<FormRefaccionesScreen> {
   final _formKey = GlobalKey<FormState>();
   final _typeAheadCtl = TextEditingController();
   final _cantidadCtl = TextEditingController();
+  final _descripcionCtl = TextEditingController();
   final _entregaCtl = TextEditingController();
 
   @override
@@ -33,25 +37,102 @@ class _FormRefaccionesScreenState extends State<FormRefaccionesScreen> {
     _ctrl.removeListener(_onState);
     _typeAheadCtl.dispose();
     _cantidadCtl.dispose();
+    _descripcionCtl.dispose();
     _entregaCtl.dispose();
     super.dispose();
   }
+  Future<bool?> _confirmNextStatus() async {
+    return showDialog<bool>(
+      context: context,
+      barrierDismissible: true,
+      builder: (ctx) => AlertDialog(
+        title: const Text('¿Pasar al siguiente estatus?'),
+        content: const Text(
+            'Se agregará la refacción. ¿Deseas ir ahora a la pantalla de estatus para continuar el flujo?'
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(null), // Cancelar (no hace nada)
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false), // No: solo guardar y regresar
+            child: const Text('No'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(true), // Sí: guardar y navegar a estatus
+            child: const Text('Sí'),
+          ),
+        ],
+      ),
+    );
+  }
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+
+    final goToStatus = await showConfirmDialog(
+      context,
+      title: '¿Pasar al siguiente estatus?',
+      message: 'Se agregará la refacción. ¿Deseas ir ahora a la pantalla de estatus para continuar el flujo?',
+      confirmText: 'Sí',
+      denyText: 'No',
+      cancelText: 'Cancelar',
+      barrierDismissible: true,
+    );
+
+    if (goToStatus == null) {
+      if (!mounted) return;
+      await showAlertDialog(
+        context,
+        title: 'Operación cancelada',
+        message: 'No se agregó la refacción.',
+        okText: 'Entendido',
+      );
+      return;
+    }
+
     final ok = await _ctrl.submitAdd(ordenServicioId: widget.ordenServicioId);
     if (!mounted) return;
-    if (ok) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Refacción agregada')));
-      context.pop(true);
-    } else {
+
+    if (!ok) {
       final msg = _ctrl.error ?? 'No se pudo agregar la refacción';
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+      return;
+    }
+
+    if (goToStatus == true) {
+      // 👇 Aquí ya tienes statusOrderId real (si vino desde Ordenes)
+      await context.push(
+        '/estatus', // o '/ordenes/estatus' si renombraste
+        extra: OrderStatusArgs(
+          ordenServicioId: widget.ordenServicioId,
+          statusOrderId: widget.statusOrderId, // 👈 ya no es null si lo pasaste
+        ),
+      );
+      if (mounted) context.pop(true);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Refacción agregada')),
+      );
+
+      // Limpieza opcional del form para otra captura
+      _formKey.currentState!.reset();
+      _typeAheadCtl.clear();
+      _cantidadCtl.clear();
+      _descripcionCtl.clear();
+      _entregaCtl.clear();
+      _ctrl.setSeleccion(null);
+      _ctrl.setCantidadFromText('');
+      _ctrl.setDescripcion('');
+      _ctrl.setEntrega('');
     }
   }
+
   @override
   Widget build(BuildContext context) {
     final selected = _ctrl.seleccionado;
     final loading = _ctrl.loading;
+    final isEditable = (selected?.articulo.trim().toUpperCase() == 'CRM-000001');
 
     return Scaffold(
       appBar: AppBar(
@@ -90,11 +171,19 @@ class _FormRefaccionesScreenState extends State<FormRefaccionesScreen> {
                 },
                 itemBuilder: (context, s) => ListTile(
                   title: Text(s.articulo),
-                  subtitle: Text(s.descripcion ?? '-')
+                  subtitle: Text(s.descripcion ?? '-'),
                 ),
                 onSelected: (s) {
-                  _ctrl.setSeleccion(s); // guardamos Articulo y Descripcion
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Seleccionado: ${s.articulo}')));
+                  _ctrl.setSeleccion(s); // guarda Articulo + (posible) limpia descripcion
+                  final nowEditable = s.articulo.trim().toUpperCase() == 'CRM-000001';
+                  if (!nowEditable) {
+                    // Limpia el input visual y el valor del controller para evitar enviar de más
+                    _descripcionCtl.clear();
+                    _ctrl.setDescripcion('');
+                  }
+                  ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Seleccionado: ${s.articulo}'))
+                  );
                 },
                 emptyBuilder: (_) => const Padding(
                   padding: EdgeInsets.all(12),
@@ -130,6 +219,24 @@ class _FormRefaccionesScreenState extends State<FormRefaccionesScreen> {
 
               const SizedBox(height: 16),
 
+              // DESCRIPCIÓN: SOLO si es editable (CRM-000001)
+              if (isEditable)
+                TextFormField(
+                  controller: _descripcionCtl,
+                  decoration: const InputDecoration(
+                    labelText: 'Descripción *',
+                    hintText: 'Descripción de la refacción (editable)',
+                    border: OutlineInputBorder(),
+                  ),
+                  onChanged: _ctrl.setDescripcion,
+                  validator: (v) {
+                    if (v == null || v.trim().isEmpty) return 'Ingresa la descripción';
+                    return null;
+                  },
+                ),
+
+              if (isEditable) const SizedBox(height: 16),
+
               // ENTREGA (texto)
               TextFormField(
                 controller: _entregaCtl,
@@ -149,6 +256,9 @@ class _FormRefaccionesScreenState extends State<FormRefaccionesScreen> {
                   child: ListTile(
                     title: Text(selected.articulo),
                     subtitle: Text(selected.descripcion ?? ''),
+                    trailing: isEditable
+                        ? const Chip(label: Text('Editable'), avatar: Icon(Icons.edit, size: 16))
+                        : null,
                   ),
                 ),
 
@@ -162,23 +272,6 @@ class _FormRefaccionesScreenState extends State<FormRefaccionesScreen> {
                       : const Icon(Icons.check),
                   label: Text(loading ? 'Enviando...' : 'Listo'),
                   onPressed: loading ? null : _submit,
-                ),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  icon: const Icon(Icons.edit),
-                  label: const Text('Editable'),
-                  onPressed: () async {
-                    // Navega a la pantalla editable
-                    final saved = await context.push('/refacciones/editables',extra: widget.ordenServicioId);
-
-                    // Si guardó, burbujea hacia atrás para volver a card_refacciones
-                    if (saved == true && context.mounted) {
-                      context.pop(true); // ← cierra form_refacciones devolviendo “true” al listado
-                    }
-                  },
                 ),
               ),
             ],

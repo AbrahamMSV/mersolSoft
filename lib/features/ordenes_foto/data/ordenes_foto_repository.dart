@@ -3,7 +3,7 @@ import '../../../core/result/result.dart';
 import '../../../core/errors/app_exception.dart';
 import '../../../core/di/locator.dart';
 import '../../../core/session/session_store.dart';
-import 'olt_photo_service.dart';
+import 'ordenes_foto_service.dart';
 
 class OltPhotoRepository {
   final OltPhotoService _service;
