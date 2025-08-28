@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "80190108308",
+    "project_id": "mersol-csa-tecnicos",
+    "storage_bucket": "mersol-csa-tecnicos.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:80190108308:android:79d7d3ae40c3cdd68c7a81",
+        "android_client_info": {
+          "package_name": "com.company.mersol"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDrnF-82fNPCQqwxnRkoDB9InbbkZlVAcU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:80190108308:android:e4a1f5367436785f8c7a81",
+        "android_client_info": {
+          "package_name": "com.example.base_uno"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDrnF-82fNPCQqwxnRkoDB9InbbkZlVAcU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
